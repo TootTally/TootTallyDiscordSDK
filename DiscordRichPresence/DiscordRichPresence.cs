@@ -113,13 +113,14 @@ namespace TootTallyDiscordSDK.DiscordRichPresence
             SetActivity(GameStatus.MainMenu);
         }
 
-        private static List<IDiscordSDKEntryPoint> _entryPointsInstances;
+        private static IEnumerable<DiscordEntryPoints> _entryPointsInstances;
 
         [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
         [HarmonyPostfix]
         public static void SetHomeScreenRP()
         {
-            _entryPointsInstances ??= Entrypoints.get<IDiscordSDKEntryPoint>().ToList();
+            _entryPointsInstances ??= Entrypoints.get<DiscordEntryPoints>();
+            Plugin.LogInfo($"{_entryPointsInstances.Count()} entrypoints found.");
             if (_discord == null) InitRPC();
             SetActivity(GameStatus.MainMenu);
         }
@@ -138,7 +139,7 @@ namespace TootTallyDiscordSDK.DiscordRichPresence
         {
             if (_discord == null) InitRPC();
             SetActivity(GameStatus.LevelSelect);
-            _entryPointsInstances.ForEach(entry => entry.OnLevelSelectStart());
+            _entryPointsInstances.Do(entry => entry.OnLevelSelectStart());
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
@@ -148,7 +149,7 @@ namespace TootTallyDiscordSDK.DiscordRichPresence
             if (_discord == null) InitRPC();
             GameStatus status = GameStatus.InGame;
             SetActivity(status, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), GlobalVariables.chosen_track_data.trackname_long, GlobalVariables.chosen_track_data.artist);
-            _entryPointsInstances.ForEach(entry => entry.OnGameControllerStart());
+            _entryPointsInstances.Do(entry => entry.OnGameControllerStart());
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
@@ -181,10 +182,15 @@ namespace TootTallyDiscordSDK.DiscordRichPresence
             }
         }
 
-        public interface IDiscordSDKEntryPoint
+        public class DiscordEntryPoints
         {
-            void OnGameControllerStart();
-            void OnLevelSelectStart();
+            public virtual void OnGameControllerStart()
+            {
+            }
+
+            public virtual void OnLevelSelectStart()
+            {
+            }
         }
     }
 }
