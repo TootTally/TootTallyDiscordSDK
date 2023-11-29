@@ -113,14 +113,11 @@ namespace TootTallyDiscordSDK.DiscordRichPresence
             SetActivity(GameStatus.MainMenu);
         }
 
-        private static IEnumerable<DiscordEntryPoints> _entryPointsInstances;
 
         [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
         [HarmonyPostfix]
         public static void SetHomeScreenRP()
         {
-            _entryPointsInstances ??= Entrypoints.get<DiscordEntryPoints>();
-            Plugin.LogInfo($"{_entryPointsInstances.Count()} entrypoints found.");
             if (_discord == null) InitRPC();
             SetActivity(GameStatus.MainMenu);
         }
@@ -139,7 +136,6 @@ namespace TootTallyDiscordSDK.DiscordRichPresence
         {
             if (_discord == null) InitRPC();
             SetActivity(GameStatus.LevelSelect);
-            _entryPointsInstances.Do(entry => entry.OnLevelSelectStart());
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.startSong))]
@@ -149,7 +145,6 @@ namespace TootTallyDiscordSDK.DiscordRichPresence
             if (_discord == null) InitRPC();
             GameStatus status = GameStatus.InGame;
             SetActivity(status, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), GlobalVariables.chosen_track_data.trackname_long, GlobalVariables.chosen_track_data.artist);
-            _entryPointsInstances.Do(entry => entry.OnGameControllerStart());
         }
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
@@ -179,17 +174,6 @@ namespace TootTallyDiscordSDK.DiscordRichPresence
                     _discord.Dispose();
                     _discord = null;
                 }
-            }
-        }
-
-        public class DiscordEntryPoints
-        {
-            public virtual void OnGameControllerStart()
-            {
-            }
-
-            public virtual void OnLevelSelectStart()
-            {
             }
         }
     }
